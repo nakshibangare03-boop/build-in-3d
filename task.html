@@ -1,0 +1,1142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AURORA — Spatial Audio, Reimagined</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#05070D;
+    --bg2:#0A0E18;
+    --bg3:#0F1424;
+    --glass:rgba(255,255,255,0.055);
+    --glass-strong:rgba(255,255,255,0.09);
+    --glass-border:rgba(255,255,255,0.14);
+    --violet:#7C5CFF;
+    --cyan:#33E6C8;
+    --text:#F4F5F8;
+    --text-dim:rgba(244,245,248,0.62);
+    --text-faint:rgba(244,245,248,0.38);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    overflow-x:hidden;
+    cursor:default;
+  }
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    *{animation-duration:0.01ms !important; animation-iteration-count:1 !important; transition-duration:0.01ms !important;}
+  }
+  ::selection{background:var(--violet); color:#fff;}
+
+  h1,h2,h3{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    letter-spacing:-0.02em;
+    line-height:1.05;
+  }
+  .mono{font-family:'JetBrains Mono', monospace;}
+
+  a{color:inherit;}
+
+  /* ---------------- Background canvas ---------------- */
+  #bg-canvas{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+  }
+
+  /* ---------------- Ambient glow orbs (parallax) ---------------- */
+  .orb-field{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    pointer-events:none;
+    overflow:hidden;
+  }
+  .orb{
+    position:absolute;
+    border-radius:50%;
+    filter:blur(70px);
+    opacity:0.5;
+    will-change:transform;
+  }
+  .orb1{ width:520px; height:520px; top:-10%; left:-8%; background:radial-gradient(circle, var(--violet), transparent 70%); }
+  .orb2{ width:460px; height:460px; top:30%; right:-12%; background:radial-gradient(circle, var(--cyan), transparent 70%); opacity:0.35; }
+  .orb3{ width:400px; height:400px; bottom:-8%; left:20%; background:radial-gradient(circle, #FF5CA8, transparent 70%); opacity:0.22; }
+  .orb4{ width:340px; height:340px; top:60%; left:60%; background:radial-gradient(circle, var(--violet), transparent 70%); opacity:0.2; }
+
+  /* ---------------- Nav ---------------- */
+  nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:200;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:20px 5vw;
+    backdrop-filter:blur(16px) saturate(140%);
+    -webkit-backdrop-filter:blur(16px) saturate(140%);
+    background:rgba(5,7,13,0.35);
+    border-bottom:1px solid rgba(255,255,255,0.06);
+    transition:background 0.4s ease, border-color 0.4s ease;
+  }
+  nav.scrolled{
+    background:rgba(5,7,13,0.72);
+    border-bottom-color:rgba(255,255,255,0.1);
+  }
+  .logo{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:18px;
+    letter-spacing:0.02em;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .logo::before{
+    content:'';
+    width:9px; height:9px;
+    border-radius:50%;
+    background:linear-gradient(135deg, var(--violet), var(--cyan));
+    box-shadow:0 0 12px 2px rgba(124,92,255,0.6);
+  }
+  .nav-links{
+    display:flex;
+    gap:36px;
+    font-size:13px;
+    letter-spacing:0.03em;
+    color:var(--text-dim);
+  }
+  .nav-links a{
+    text-decoration:none;
+    position:relative;
+    transition:color 0.25s ease;
+  }
+  .nav-links a:hover{color:var(--text);}
+  .nav-links a::after{
+    content:'';
+    position:absolute;
+    left:0; bottom:-5px;
+    width:0%; height:1px;
+    background:linear-gradient(90deg, var(--violet), var(--cyan));
+    transition:width 0.3s ease;
+  }
+  .nav-links a:hover::after{width:100%;}
+  .nav-cta{
+    display:none;
+  }
+  @media (min-width:720px){
+    .nav-cta{
+      display:inline-block;
+      padding:9px 20px;
+      border-radius:100px;
+      nav{
+    position:fixed;
+    top:0; left:0; right:0;
+    z-index:200;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:20px 5vw;
+    backdrop-filter:blur(16px) saturate(140%);
+    -webkit-backdrop-filter:blur(16px) saturate(140%);
+    background:rgba(5,7,13,0.35);
+    border-bottom:1px solid rgba(255,255,255,0.06);
+    transition:background 0.4s ease, border-color 0.4s ease;
+  }
+  nav.scrolled{
+    background:rgba(5,7,13,0.72);
+    border-bottom-color:rgba(255,255,255,0.1);
+  }
+  .logo{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:700;
+    font-size:18px;
+    letter-spacing:0.02em;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .logo::before{
+    content:'';
+    width:9px; height:9px;
+    border-radius:50%;
+    background:linear-gradient(135deg, var(--violet), var(--cyan));
+    box-shadow:0 0 12px 2px rgba(124,92,255,0.6);
+  }
+  .nav-links{
+    display:flex;
+    gap:36px;
+    font-size:13px;
+    letter-spacing:0.03em;
+    color:var(--text-dim);
+  }
+  .nav-links a{
+    text-decoration:none;
+    position:relative;
+    transition:color 0.25s ease;
+  }
+  .nav-links a:hover{color:var(--text);}
+  .nav-links a::after{
+    content:'';
+    position:absolute;
+    left:0; bottom:-5px;
+    width:0%; height:1px;
+    background:linear-gradient(90deg, var(--violet), var(--cyan));
+    transition:width 0.3s ease;
+  }
+  .nav-links a:hover::after{width:100%;}
+  .nav-cta{
+    display:none;
+  }
+  @media (min-width:720px){
+    .nav-cta{
+      display:inline-block;
+      padding:9px 20px;
+      border-radius:100px;
+      background:var(--glass-strong);
+      border:1px solid var(--glass-border);
+      font-size:12px;
+      letter-spacing:0.05em;
+      text-decoration:none;
+      backdrop-filter:blur(10px);
+      transition:background 0.25s ease, transform 0.25s ease;
+    }
+    .nav-cta:hover{ background:rgba(255,255,255,0.14); transform:translateY(-1px); }
+  }
+  @media (max-width:840px){
+    .nav-links{display:none;}
+  }
+
+  /* ---------------- Sections generic ---------------- */
+  section{
+    position:relative;
+    z-index:2;
+  }
+  .wrap{
+    max-width:1180px;
+    margin:0 auto;
+    padding:0 5vw;
+  }
+  .eyebrow{
+    display:inline-flex;
+    align-items:center;
+    gap:9px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:0.16em;
+    text-transform:uppercase;
+    color:var(--cyan);
+    margin-bottom:20px;
+  }
+  .eyebrow::before{
+    content:'';
+    width:20px; height:1px;
+    background:var(--cyan);
+  }
+  /* ---------------- Hero ---------------- */
+  #hero{
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    padding-top:80px;
+  }
+  .hero-grid{
+    display:grid;
+    grid-template-columns:1.05fr 0.95fr;
+    gap:40px;
+    align-items:center;
+    width:100%;
+  }
+  @media (max-width:900px){
+    .hero-grid{ grid-template-columns:1fr; }
+  }
+  .hero-title{
+    font-size:clamp(2.6rem, 5.2vw, 4.5rem);
+  }
+  .hero-title .grad{
+    background:linear-gradient(120deg, var(--violet), var(--cyan) 60%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .hero-sub{
+    margin-top:22px;
+    font-size:16.5px;
+    line-height:1.75;
+    color:var(--text-dim);
+    max-width:46ch;
+  }
+  .hero-actions{
+    margin-top:38px;
+    display:flex;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .btn{
+    padding:14px 28px;
+    border-radius:100px;
+    font-size:13.5px;
+    letter-spacing:0.03em;
+    font-weight:500;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    transition:transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+    cursor:pointer;
+    border:none;
+  }
+  .btn-primary{
+    background:linear-gradient(120deg, var(--violet), #9A7CFF);
+    color:#fff;
+    box-shadow:0 8px 24px -8px rgba(124,92,255,0.6);
+  }
+  .btn-primary:hover{ transform:translateY(-2px); box-shadow:0 12px 32px -8px rgba(124,92,255,0.75); }
+  .btn-ghost{
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    color:var(--text);
+    backdrop-filter:blur(10px);
+  }
+  .btn-ghost:hover{ background:var(--glass-strong); transform:translateY(-2px); }
+
+  .hero-stats{
+    margin-top:52px;
+    display:flex;
+    gap:38px;
+  }
+  .hero-stats .stat b{
+    display:block;
+    font-family:'Space Grotesk', sans-serif;
+    font-size:24px;
+    font-weight:600;
+    background:linear-gradient(120deg, var(--text), var(--text-dim));
+    -webkit-background-clip:text;
+    background-clip:text;
+  }
+  .hero-stats .stat span{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+  }
+
+  /* Hero visual: glass product card w/ tilt + orbiting particles */
+  .hero-visual{
+    position:relative;
+    height:480px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    perspective:1000px;
+  }
+  .tilt-card{
+    position:relative;
+    width:320px;
+    height:400px;
+    border-radius:28px;
+    background:linear-gradient(160deg, rgba(255,255,255,0.09), rgba(255,255,255,0.02));
+    border:1px solid var(--glass-border);
+    backdrop-filter:blur(20px) saturate(160%);
+    -webkit-backdrop-filter:blur(20px) saturate(160%);
+    box-shadow:0 30px 80px -20px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.12);
+    transform-style:preserve-3d;
+    transition:transform 0.15s ease-out;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+  }
+  .tilt-card .shine{
+    position:absolute;
+    inset:-50%;
+    background:radial-gradient(circle at 50% 0%, rgba(255,255,255,0.18), transparent 55%);
+    pointer-events:none;
+  }
+  #orbit-canvas{
+    width:100%;
+    height:100%;
+  }
+  .card-caption{
+    position:absolute;
+    bottom:22px; left:0; right:0;
+    text-align:center;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:0.12em;
+    color:var(--text-faint);
+    text-transform:uppercase;
+  }
+
+  /* floating mini glass chips around card */
+  .chip{
+    position:absolute;
+    padding:8px 14px;
+    border-radius:100px;
+    background:var(--glass-strong);
+    border:1px solid var(--glass-border);
+    backdrop-filter:blur(12px);
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:0.05em;
+    color:var(--text);
+    display:flex;
+    align-items:center;
+    gap:6px;
+    animation:floatChip 5s ease-in-out infinite;
+  }
+  .chip::before{ content:''; width:6px; height:6px; border-radius:50%; background:var(--cyan); box-shadow:0 0 8px var(--cyan); }
+  .chip-1{ top:6%; left:-6%; animation-delay:0s; }
+  .chip-2{ bottom:14%; right:-8%; animation-delay:1.4s; }
+  .chip-3{ top:44%; right:-14%; animation-delay:2.6s; }
+  @keyframes floatChip{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-10px); }
+  }
+  @media (max-width:900px){
+    .hero-visual{ height:400px; margin-top:20px; }
+    .chip{ display:none; }
+  }
+
+  .scroll-indicator{
+    position:absolute;
+    bottom:36px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:8px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10px;
+    letter-spacing:0.14em;
+    color:var(--text-faint);
+    text-transform:uppercase;
+  }
+  .scroll-indicator .line{
+    width:1px; height:34px;
+    background:linear-gradient(to bottom, var(--cyan), transparent);
+    animation:scrollLine 1.8s ease-in-out infinite;
+  }
+  @keyframes scrollLine{
+    0%{ transform:scaleY(0); transform-origin:top; }
+    50%{ transform:scaleY(1); transform-origin:top; }
+    50.1%{ transform-origin:bottom; }
+    100%{ transform:scaleY(0); transform-origin:bottom; }
+  }
+
+  /* ---------------- Section headers ---------------- */
+  .section-head{
+    max-width:640px;
+    margin-bottom:64px;
+  }
+  .section-head h2{
+    font-size:clamp(2rem, 3.6vw, 3rem);
+  }
+  .section-head p{
+    margin-top:16px;
+    color:var(--text-dim);
+    font-size:15.5px;
+    line-height:1.7;
+    max-width:52ch;
+  }
+  /* ---------------- Feature grid (glass cards, scroll reveal) ---------------- */
+  #features{ padding:140px 0; }
+  .feature-grid{
+    display:grid;
+    grid-template-columns:repeat(3, 1fr);
+    gap:22px;
+  }
+  @media (max-width:900px){ .feature-grid{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:600px){ .feature-grid{ grid-template-columns:1fr; } }
+
+  .reveal{
+    opacity:0;
+    transform:translateY(36px);
+    transition:opacity 0.8s cubic-bezier(.22,.9,.32,1), transform 0.8s cubic-bezier(.22,.9,.32,1);
+  }
+  .reveal.in-view{
+    opacity:1;
+    transform:translateY(0);
+  }
+
+  .fcard{
+    position:relative;
+    padding:30px 26px;
+    border-radius:20px;
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    backdrop-filter:blur(18px) saturate(150%);
+    -webkit-backdrop-filter:blur(18px) saturate(150%);
+    overflow:hidden;
+    transition:transform 0.35s ease, border-color 0.35s ease, background 0.35s ease;
+  }
+  .fcard:hover{
+    transform:translateY(-6px);
+    border-color:rgba(255,255,255,0.28);
+    background:var(--glass-strong);
+  }
+  .fcard::before{
+    content:'';
+    position:absolute;
+    top:-40%; left:-40%;
+    width:180%; height:180%;
+    background:radial-gradient(circle at 30% 20%, rgba(124,92,255,0.14), transparent 55%);
+    pointer-events:none;
+  }
+  .fcard .ficon{
+    width:42px; height:42px;
+    border-radius:12px;
+    background:linear-gradient(135deg, rgba(124,92,255,0.25), rgba(51,230,200,0.18));
+    border:1px solid var(--glass-border);
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:20px;
+  }
+  .fcard h3{
+    font-size:19px;
+    font-weight:600;
+    margin-bottom:10px;
+  }
+  .fcard p{
+    font-size:14px;
+    line-height:1.65;
+    color:var(--text-dim);
+  }
+  .fcard .ftag{
+    margin-top:18px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:0.08em;
+    color:var(--text-faint);
+    text-transform:uppercase;
+  }
+  /* ---------------- Parallax showcase ---------------- */
+  #showcase{
+    position:relative;
+    min-height:120vh;
+    display:flex;
+    align-items:center;
+    overflow:hidden;
+    padding:100px 0;
+  }
+  .showcase-layer{
+    position:absolute;
+    inset:0;
+    will-change:transform;
+  }
+  .ring{
+    position:absolute;
+    border-radius:50%;
+    border:1px solid rgba(255,255,255,0.08);
+  }
+  .ring1{ width:640px; height:640px; top:8%; left:50%; margin-left:-320px; }
+  .ring2{ width:460px; height:460px; top:20%; left:50%; margin-left:-230px; border-color:rgba(51,230,200,0.12); }
+  .ring3{ width:280px; height:280px; top:32%; left:50%; margin-left:-140px; border-color:rgba(124,92,255,0.16); }
+
+  .showcase-content{
+    position:relative;
+    z-index:5;
+    text-align:center;
+    max-width:640px;
+    margin:0 auto;
+  }
+  .showcase-content h2{
+    font-size:clamp(2.2rem, 5vw, 3.6rem);
+  }
+  .showcase-content p{
+    margin:20px auto 0;
+    color:var(--text-dim);
+    font-size:16px;
+    line-height:1.75;
+    max-width:48ch;
+  }
+  .showcase-metrics{
+    margin-top:52px;
+    display:flex;
+    justify-content:center;
+    gap:52px;
+    flex-wrap:wrap;
+  }
+  .showcase-metrics .metric b{
+    display:block;
+    font-family:'Space Grotesk', sans-serif;
+    font-size:34px;
+    font-weight:700;
+    background:linear-gradient(120deg, var(--violet), var(--cyan));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .showcase-metrics .metric span{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+  }
+  /* ---------------- Waveform / particle strip ---------------- */
+  #wave-strip{
+    position:relative;
+    height:160px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  #wave-canvas{ width:100%; height:100%; }
+
+  /* ---------------- Testimonial ---------------- */
+  #quote{
+    padding:140px 0;
+    display:flex;
+    justify-content:center;
+  }
+  .quote-card{
+    max-width:760px;
+    padding:56px 60px;
+    border-radius:26px;
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    backdrop-filter:blur(20px) saturate(150%);
+    -webkit-backdrop-filter:blur(20px) saturate(150%);
+    text-align:center;
+    position:relative;
+  }
+  @media (max-width:640px){ .quote-card{ padding:40px 26px; } }
+  .quote-mark{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:56px;
+    color:var(--violet);
+    opacity:0.5;
+    line-height:1;
+  }
+  .quote-card p{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:clamp(1.3rem, 2.6vw, 1.7rem);
+    font-weight:500;
+    line-height:1.5;
+    margin-top:12px;
+  }
+  .quote-attr{
+    margin-top:28px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    letter-spacing:0.06em;
+    color:var(--text-faint);
+    text-transform:uppercase;
+  }
+
+  /* ---------------- Specs ---------------- */
+  #specs{ padding:60px 0 140px; }
+  .specs-grid{
+    display:grid;
+    grid-template-columns:repeat(4, 1fr);
+    gap:1px;
+    background:var(--glass-border);
+    border:1px solid var(--glass-border);
+    border-radius:20px;
+    overflow:hidden;
+  }
+  @media (max-width:900px){ .specs-grid{ grid-template-columns:1fr 1fr; } }
+  @media (max-width:520px){ .specs-grid{ grid-template-columns:1fr; } }
+  .spec-cell{
+    background:rgba(10,14,24,0.7);
+    padding:30px 24px;
+    transition:background 0.3s ease;
+  }
+  .spec-cell:hover{ background:rgba(255,255,255,0.05); }
+  .spec-cell .label{
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+  }
+  .spec-cell .value{
+    margin-top:10px;
+    font-family:'Space Grotesk', sans-serif;
+    font-size:22px;
+    font-weight:600;
+  }
+
+  /* ---------------- CTA / Waitlist ---------------- */
+  #cta{
+    padding:100px 0 60px;
+  }
+  .cta-card{
+    position:relative;
+    border-radius:28px;
+    padding:70px 40px;
+    text-align:center;
+    background:linear-gradient(160deg, rgba(124,92,255,0.14), rgba(51,230,200,0.08));
+    border:1px solid var(--glass-border);
+    overflow:hidden;
+  }
+  .cta-card h2{ font-size:clamp(1.9rem, 4vw, 2.8rem); }
+  .cta-card p{
+    margin:16px auto 0;
+    color:var(--text-dim);
+    max-width:44ch;
+  }
+  .cta-form{
+    margin:34px auto 0;
+    display:flex;
+    max-width:420px;
+    gap:10px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .cta-form input{
+    flex:1;
+    min-width:200px;
+    padding:14px 18px;
+    border-radius:100px;
+    border:1px solid var(--glass-border);
+    background:rgba(255,255,255,0.06);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    font-size:14px;
+    outline:none;
+    transition:border-color 0.25s ease, background 0.25s ease;
+  }
+  .cta-form input::placeholder{ color:var(--text-faint); }
+  .cta-form input:focus{ border-color:var(--cyan); background:rgba(255,255,255,0.09); }
+  .form-note{
+    margin-top:14px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:10.5px;
+    color:var(--text-faint);
+  }
+  .form-success{
+    margin-top:14px;
+    font-family:'JetBrains Mono', monospace;
+    font-size:11.5px;
+    color:var(--cyan);
+    display:none;
+  }
+  .form-success.show{ display:block; }
+  /* ---------------- Footer ---------------- */
+  footer{
+    padding:40px 5vw 50px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    border-top:1px solid rgba(255,255,255,0.06);
+    font-family:'JetBrains Mono', monospace;
+    font-size:11px;
+    color:var(--text-faint);
+    flex-wrap:wrap;
+    gap:14px;
+  }
+  footer .fsocial{ display:flex; gap:20px; }
+  footer a{ text-decoration:none; color:var(--text-faint); transition:color 0.25s ease; }
+  footer a:hover{ color:var(--text); }
+
+  /* focus visibility */
+  a:focus-visible, button:focus-visible, input:focus-visible{
+    outline:2px solid var(--cyan);
+    outline-offset:3px;
+  }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div class="orb-field">
+  <div class="orb orb1" data-speed="0.18"></div>
+  <div class="orb orb2" data-speed="0.28"></div>
+  <div class="orb orb3" data-speed="0.12"></div>
+  <div class="orb orb4" data-speed="0.22"></div>
+</div>
+
+<nav id="navbar">
+  <div class="logo">AURORA</div>
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#showcase">Sound</a>
+    <a href="#specs">Specs</a>
+    <a href="#cta">Waitlist</a>
+  </div>
+  <a href="#cta" class="nav-cta">Get Early Access</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="wrap hero-grid">
+    <div>
+      <div class="eyebrow">Now in development</div>
+      <h1 class="hero-title">Sound that<br><span class="grad">disappears into you.</span></h1>
+      <p class="hero-sub">AURORA is a spatial-audio earbud built around one idea: the best interface is the one you stop noticing. Adaptive noise cancelling, lossless wireless, and a fit engineered from 40,000 ear scans.</p>
+      <div class="hero-actions">
+        <a href="#cta" class="btn btn-primary">Join the waitlist →</a>
+        <a href="#showcase" class="btn btn-ghost">Hear the difference</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><b>48h</b><span>Battery, case incl.</span></div>
+        <div class="stat"><b>0.9g</b><span>Per earbud</span></div>
+        <div class="stat"><b>−42dB</b><span>Peak ANC depth</span></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="chip chip-1">ANC ACTIVE</div>
+      <div class="chip chip-2">LOSSLESS</div>
+      <div class="chip chip-3">24-BIT / 96KHZ</div>
+      <div class="tilt-card" id="tiltCard">
+        <div class="shine"></div>
+        <canvas id="orbit-canvas"></canvas>
+        <div class="card-caption">Aurora — Gen 1</div>
+      </div>
+    </div>
+  </div>
+  <div class="scroll-indicator"><span>Scroll</span><div class="line"></div></div>
+</section>
+<!-- FEATURES -->
+<section id="features">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">Engineering</div>
+      <h2>Every layer, tuned on purpose.</h2>
+      <p>Nothing here is a default component. Each system was built or heavily modified to hit a single target: audio that feels like it was mixed inside your head.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="fcard reveal">
+        <div class="ficon">◐</div>
+        <h3>Adaptive ANC</h3>
+        <p>1,200 micro-adjustments per second reshape the noise-cancelling curve to your ear canal and environment in real time.</p>
+        <div class="ftag">Silence · Dynamic</div>
+      </div>
+      <div class="fcard reveal">
+        <div class="ficon">◈</div>
+        <h3>Spatial Engine</h3>
+        <p>Head-tracked spatial audio renders sound as fixed points in a room, not inside your skull — even mid-call.</p>
+        <div class="ftag">Position · 3D</div>
+      </div>
+      <div class="fcard reveal">
+        <div class="ficon">◇</div>
+        <h3>Lossless Link</h3>
+        <p>A dedicated 5GHz wireless protocol carries full 24-bit/96kHz audio with no compression artifacts, no dropouts.</p>
+        <div class="ftag">Codec · Custom</div>
+      </div>
+      <div class="fcard reveal">
+        <div class="ficon">◑</div>
+        <h3>Scanned Fit</h3>
+        <p>Three ear-tip geometries derived from 40,000 3D ear scans, so pressure sits where your ear actually flexes.</p>
+        <div class="ftag">Comfort · Fit</div>
+      </div>
+      <div class="fcard reveal">
+        <div class="ficon">◒</div>
+        <h3>48-Hour Case</h3>
+        <p>The case doubles as a wireless charger for your phone — power flows both ways when you need it most.</p>
+        <div class="ftag">Power · Shared</div>
+      </div>
+      <div class="fcard reveal">
+        <div class="ficon">◓</div>
+        <h3>Voice Isolation</h3>
+        <p>A bone-conduction sensor pairs with six mics to strip wind and crowd noise from your voice on calls.</p>
+        <div class="ftag">Clarity · Calls</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SHOWCASE / PARALLAX RINGS -->
+<section id="showcase">
+  <div class="showcase-layer" data-speed="0.25">
+    <div class="ring ring1"></div>
+  </div>
+  <div class="showcase-layer" data-speed="0.45">
+    <div class="ring ring2"></div>
+  </div>
+  <div class="showcase-layer" data-speed="0.7">
+    <div class="ring ring3"></div>
+  </div>
+  <div class="wrap">
+    <div class="showcase-content reveal">
+      <div class="eyebrow" style="justify-content:center;">The listening test</div>
+      <h2>Close your eyes.<br>Open your ears.</h2>
+      <p>In blind tests, listeners placed AURORA's soundstage within 2° of true source position — closer than any wireless earbud we measured against.</p>
+      <div class="showcase-metrics">
+        <div class="metric"><b>2°</b><span>Spatial accuracy</span></div>
+        <div class="metric"><b>11ms</b><span>Motion-to-sound latency</span></div>
+        <div class="metric"><b>96%</b><span>Preferred vs. wired</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+<!-- WAVEFORM STRIP -->
+<section id="wave-strip">
+  <canvas id="wave-canvas"></canvas>
+</section>
+
+<!-- QUOTE -->
+<section id="quote">
+  <div class="quote-card reveal">
+    <div class="quote-mark">“</div>
+    <p>It's the first pair of earbuds where I forgot I was wearing headphones — the sound just felt like it belonged in the room.</p>
+    <div class="quote-attr">— Early Tester, Closed Beta Program</div>
+  </div>
+</section>
+
+<!-- SPECS -->
+<section id="specs">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow">Specifications</div>
+      <h2>The numbers, plainly.</h2>
+    </div>
+    <div class="specs-grid reveal">
+      <div class="spec-cell"><div class="label">Driver</div><div class="value">11mm Dynamic</div></div>
+      <div class="spec-cell"><div class="label">Frequency</div><div class="value">18Hz–22kHz</div></div>
+      <div class="spec-cell"><div class="label">Bluetooth</div><div class="value">5.4 + 5GHz</div></div>
+      <div class="spec-cell"><div class="label">Water Rating</div><div class="value">IPX5</div></div>
+      <div class="spec-cell"><div class="label">Charge Time</div><div class="value">10min → 6hr</div></div>
+      <div class="spec-cell"><div class="label">Weight (case)</div><div class="value">42g</div></div>
+      <div class="spec-cell"><div class="label">Mics</div><div class="value">6 + Bone Sensor</div></div>
+      <div class="spec-cell"><div class="label">Ear Tips</div><div class="value">XS / S / M / L</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta">
+  <div class="wrap">
+    <div class="cta-card reveal">
+      <div class="eyebrow" style="justify-content:center;">Limited early access</div>
+      <h2>Be first to hear it.</h2>
+      <p>Join the waitlist for early-access pricing and first shipment priority. No spam, one email when we launch.</p>
+      <form class="cta-form" id="waitlistForm">
+        <input type="email" placeholder="you@email.com" id="emailInput" required>
+        <button type="submit" class="btn btn-primary">Request access</button>
+      </form>
+      <div class="form-note">Joining ≠ purchasing. We'll email you when AURORA ships.</div>
+      <div class="form-success" id="formSuccess">✓ You're on the list. Watch your inbox.</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>© 2026 AURORA AUDIO — CONCEPT PAGE</span>
+  <div class="fsocial">
+    <a href="#hero">Back to top</a>
+    <a href="#">Instagram</a>
+    <a href="#">X</a>
+  </div>
+</footer>
+
+<script>
+(function(){
+  /* ===== Nav background on scroll ===== */
+  const nav = document.getElementById('navbar');
+  function handleNav(){
+    if(window.scrollY > 40) nav.classList.add('scrolled');
+    else nav.classList.remove('scrolled');
+  }
+  window.addEventListener('scroll', handleNav, {passive:true});
+  handleNav();
+
+  /* ===== Ambient background particle canvas ===== */
+  const bgCanvas = document.getElementById('bg-canvas');
+  const bgCtx = bgCanvas.getContext('2d');
+  let bgParticles = [];
+
+  function resizeBg(){
+    bgCanvas.width = window.innerWidth;
+    bgCanvas.height = document.documentElement.scrollHeight;
+  }
+
+  function seedBgParticles(){
+    const count = Math.floor((window.innerWidth * window.innerHeight) / 22000);
+    bgParticles = Array.from({length: Math.min(count, 140)}, () => ({
+      x: Math.random() * bgCanvas.width,
+      y: Math.random() * bgCanvas.height,
+      r: Math.random() * 1.6 + 0.4,
+      vy: Math.random() * 0.15 + 0.03,
+      vx: (Math.random() - 0.5) * 0.06,
+      alpha: Math.random() * 0.5 + 0.15,
+      hue: Math.random() > 0.5 ? '124,92,255' : '51,230,200'
+    }));
+  }
+  function drawBg(){
+    bgCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+    bgParticles.forEach(p => {
+      p.y -= p.vy;
+      p.x += p.vx;
+      if(p.y < -10){ p.y = bgCanvas.height + 10; p.x = Math.random() * bgCanvas.width; }
+      bgCtx.beginPath();
+      bgCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      bgCtx.fillStyle = `rgba(${p.hue},${p.alpha})`;
+      bgCtx.fill();
+    });
+    requestAnimationFrame(drawBg);
+  }
+
+  resizeBg();
+  seedBgParticles();
+  drawBg();
+  window.addEventListener('resize', () => { resizeBg(); seedBgParticles(); });
+
+  /* ===== Orb + showcase-ring parallax on scroll ===== */
+  const parallaxEls = document.querySelectorAll('[data-speed]');
+  let scrollTicking = false;
+
+  function updateParallax(){
+    const y = window.scrollY;
+    parallaxEls.forEach(el => {
+      const speed = parseFloat(el.dataset.speed);
+      el.style.transform = `translateY(${y * speed * -0.15}px)`;
+    });
+    scrollTicking = false;
+  }
+  window.addEventListener('scroll', () => {
+    if(!scrollTicking){
+      requestAnimationFrame(updateParallax);
+      scrollTicking = true;
+    }
+  }, {passive:true});
+  updateParallax();
+
+  /* ===== Scroll-reveal via IntersectionObserver ===== */
+  const revealEls = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        entry.target.classList.add('in-view');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -60px 0px' });
+  revealEls.forEach(el => io.observe(el));
+
+  /* ===== Tilt card (mouse-follow 3D) ===== */
+  const tiltCard = document.getElementById('tiltCard');
+  const heroVisual = document.querySelector('.hero-visual');
+  if(window.matchMedia('(hover: hover)').matches){
+    heroVisual.addEventListener('mousemove', (e) => {
+      const rect = tiltCard.getBoundingClientRect();
+      const px = (e.clientX - rect.left) / rect.width - 0.5;
+      const py = (e.clientY - rect.top) / rect.height - 0.5;
+      tiltCard.style.transform = `rotateY(${px * 16}deg) rotateX(${-py * 16}deg) scale(1.02)`;
+    });
+    heroVisual.addEventListener('mouseleave', () => {
+      tiltCard.style.transform = 'rotateY(0deg) rotateX(0deg) scale(1)';
+    });
+  }
+
+  /* ===== Orbit canvas inside tilt card ===== */
+  const orbitCanvas = document.getElementById('orbit-canvas');
+  const orbitCtx = orbitCanvas.getContext('2d');
+  let orbitDots = [];
+
+  function sizeOrbitCanvas(){
+    const rect = tiltCard.getBoundingClientRect();
+    orbitCanvas.width = rect.width;
+    orbitCanvas.height = rect.height;
+  }
+
+  function seedOrbit(){
+    orbitDots = Array.from({length: 34}, (_, i) => ({
+      angle: (i / 34) * Math.PI * 2,
+      radius: 60 + Math.random() * 70,
+      speed: 0.002 + Math.random() * 0.004,
+      r: Math.random() * 2 + 0.8,
+      hue: Math.random() > 0.5 ? '124,92,255' : '51,230,200'
+    }));
+  }
+
+  function drawOrbit(){
+    const w = orbitCanvas.width, h = orbitCanvas.height;
+    orbitCtx.clearRect(0, 0, w, h);
+    const cx = w / 2, cy = h / 2 - 20;
+
+    // core glow
+    const grad = orbitCtx.createRadialGradient(cx, cy, 4, cx, cy, 46);
+    grad.addColorStop(0, 'rgba(124,92,255,0.9)');
+    grad.addColorStop(1, 'rgba(124,92,255,0)');
+    orbitCtx.beginPath();
+    orbitCtx.arc(cx, cy, 46, 0, Math.PI * 2);
+    orbitCtx.fillStyle = grad;
+    orbitCtx.fill();
+    orbitDots.forEach(d => {
+      d.angle += d.speed;
+      const x = cx + Math.cos(d.angle) * d.radius;
+      const y = cy + Math.sin(d.angle) * d.radius * 0.4;
+      orbitCtx.beginPath();
+      orbitCtx.arc(x, y, d.r, 0, Math.PI * 2);
+      orbitCtx.fillStyle = `rgba(${d.hue},0.85)`;
+      orbitCtx.fill();
+    });
+
+    requestAnimationFrame(drawOrbit);
+  }
+
+  sizeOrbitCanvas();
+  seedOrbit();
+  drawOrbit();
+  window.addEventListener('resize', sizeOrbitCanvas);
+
+  /* ===== Waveform strip (scroll-reactive) ===== */
+  const waveCanvas = document.getElementById('wave-canvas');
+  const waveCtx = waveCanvas.getContext('2d');
+  const waveSection = document.getElementById('wave-strip');
+  let waveIntensity = 0.3;
+
+  function sizeWave(){
+    waveCanvas.width = waveSection.clientWidth;
+    waveCanvas.height = waveSection.clientHeight;
+  }
+
+  function drawWave(t){
+    const w = waveCanvas.width, h = waveCanvas.height;
+    waveCtx.clearRect(0, 0, w, h);
+    const bars = 64;
+    const gap = w / bars;
+
+    // update intensity based on how centered the strip is in viewport
+    const rect = waveSection.getBoundingClientRect();
+    const vh = window.innerHeight;
+    const centerDist = Math.abs((rect.top + rect.height / 2) - vh / 2);
+    const proximity = Math.max(0, 1 - centerDist / (vh * 0.8));
+    waveIntensity = 0.15 + proximity * 0.85;
+
+    for(let i = 0; i < bars; i++){
+      const n = Math.sin(i * 0.4 + t * 0.0022) * 0.5 + Math.sin(i * 0.15 - t * 0.0016) * 0.5;
+      const barH = (Math.abs(n) * 0.7 + 0.06) * h * waveIntensity;
+      const x = i * gap + gap * 0.25;
+      const y = h / 2 - barH / 2;
+      const hue = i % 2 === 0 ? '124,92,255' : '51,230,200';
+      waveCtx.fillStyle = `rgba(${hue},${0.35 + waveIntensity * 0.5})`;
+      waveCtx.fillRect(x, y, gap * 0.5, barH);
+    }
+    requestAnimationFrame(drawWave);
+  }
+
+  sizeWave();
+  window.addEventListener('resize', sizeWave);
+  requestAnimationFrame(drawWave);
+
+  /* ===== Waitlist form (UI-only, no backend) ===== */
+  const form = document.getElementById('waitlistForm');
+  const success = document.getElementById('formSuccess');
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const emailInput = document.getElementById('emailInput');
+    if(emailInput.value.trim()){
+      success.classList.add('show');
+      form.reset();
+      setTimeout(() => success.classList.remove('show'), 4000);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
